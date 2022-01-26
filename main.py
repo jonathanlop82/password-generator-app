@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 import random
 import pyperclip
+import json
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 #Password Generator Project
 
@@ -38,6 +39,12 @@ def save_password():
     website = website_input.get()
     email = email_input.get()
     password = password_input.get()
+    new_data = {
+        website:{
+            "email":email,
+            "password":password
+        }
+    }
 
     if website == '' or email == '' or password == '':
         messagebox.showinfo(title="Oops", message="Please dont't leave any fields empty!")
@@ -45,14 +52,38 @@ def save_password():
         is_ok = messagebox.askokcancel(title=website, message=f"These are the details entered: \nEmail: {email}\nPassword: {password}\nIt is ok to save?")
 
         if is_ok:
-            with open("data.txt", "a") as data:
-                data.write(f"{website} | {email} | {password}\n")
-                website_input.delete(0,'end')
-                password_input.delete(0,'end')
-                website_input.focus()
+            try:
+                with open("data.json", "r") as data:
+                    dict_data = json.load(data)
+                    dict_data.update(new_data)
+            except FileNotFoundError:
+                with open("data.json", "w") as data:
+                    json.dump(new_data, data, indent=4)
+            else:
+                with open("data.json", "w") as data:
+                    #data.write(f"{website} | {email} | {password}\n")
+                    json.dump(dict_data, data, indent=4)
+
+            website_input.delete(0,'end')
+            password_input.delete(0,'end')
+            website_input.focus()
 
 
+# ----------------------------- GET DATA ------------------------------#
 
+def get_password():
+    try:
+        with open("data.json", "r") as data:
+            dict_data = json.load(data)
+    except FileNotFoundError:
+        messagebox.showinfo(message="File not found")
+
+    website_search = website_input.get()
+    print(website_search)
+    try:
+        messagebox.showinfo(title=website_search,message=f"Email: {dict_data[website_search]['email']}\nPassword: {dict_data[website_search]['password']}")
+    except KeyError:
+        messagebox.showinfo(message="Website not found")
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -76,8 +107,8 @@ email_label.grid(column=0, row=2)
 password_label = Label(text="Password:")
 password_label.grid(column=0, row=3)
 
-website_input = Entry(width=35)
-website_input.grid(column=1, row=1, columnspan=2)
+website_input = Entry(width=21)
+website_input.grid(column=1, row=1)
 website_input.focus()
 
 email_input = Entry(width=35)
@@ -92,6 +123,9 @@ generator_pass_button.grid(column=2, row=3)
 
 add_button = Button(text="Add", width=36, command=save_password)
 add_button.grid(column=1, row=4, columnspan=2)
+
+search_button = Button(text="Search",  width=13, command=get_password)
+search_button.grid(column=2, row=1)
 
 
 
